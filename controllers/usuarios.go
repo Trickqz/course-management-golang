@@ -6,6 +6,7 @@ import (
 	"sync"
 	"strconv"
 	"course-management-api/models"
+	"course-management-api/database"
 )
 
 var (
@@ -20,16 +21,21 @@ func CreateUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usuariosMu.Lock()
-	novoUsuario.ID = len(usuarios) + 1
-	usuarios = append(usuarios, novoUsuario)
-	usuariosMu.Unlock()
+	if err := database.DB.Create(&novoUsuario).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(novoUsuario)
 }
 
 func GetUsuarios(w http.ResponseWriter, r *http.Request) {
+	var usuarios []models.Usuario
+	if err := database.DB.Find(&usuarios).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(usuarios)
 }
@@ -41,18 +47,19 @@ func UpdateUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usuariosMu.Lock()
-	defer usuariosMu.Unlock()
-
-	for i, usuario := range usuarios {
-		if usuario.ID == updatedUsuario.ID {
-			usuarios[i] = updatedUsuario
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(updatedUsuario)
-			return
-		}
+	var usuario models.Usuario
+	if err := database.DB.First(&usuario, updatedUsuario.ID).Error; err != nil {
+		http.Error(w, "Usuário não encontrado", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Usuário não encontrado", http.StatusNotFound)
+
+	if err := database.DB.Save(&updatedUsuario).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedUsuario)
 }
 
 func DeleteUsuario(w http.ResponseWriter, r *http.Request) {
@@ -63,15 +70,16 @@ func DeleteUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usuariosMu.Lock()
-	defer usuariosMu.Unlock()
-
-	for i, usuario := range usuarios {
-		if usuario.ID == id {
-			usuarios = append(usuarios[:i], usuarios[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	var usuario models.Usuario
+	if err := database.DB.First(&usuario, id).Error; err != nil {
+		http.Error(w, "Usuário não encontrado", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Usuário não encontrado", http.StatusNotFound)
+
+	if err := database.DB.Delete(&usuario).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

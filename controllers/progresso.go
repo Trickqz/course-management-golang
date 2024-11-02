@@ -3,14 +3,9 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"strconv"
 	"course-management-api/models"
-)
-
-var (
-	progresso  = []models.Progresso{}
-	progressoMu sync.Mutex
+	"course-management-api/database"
 )
 
 func CreateProgresso(w http.ResponseWriter, r *http.Request) {
@@ -20,15 +15,21 @@ func CreateProgresso(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	progressoMu.Lock()
-	progresso = append(progresso, novoProgresso)
-	progressoMu.Unlock()
+	if err := database.DB.Create(&novoProgresso).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(novoProgresso)
 }
 
 func GetProgresso(w http.ResponseWriter, r *http.Request) {
+	var progresso []models.Progresso
+	if err := database.DB.Find(&progresso).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(progresso)
 }
@@ -40,18 +41,19 @@ func UpdateProgresso(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	progressoMu.Lock()
-	defer progressoMu.Unlock()
-
-	for i, p := range progresso {
-		if p.UsuarioID == updatedProgresso.UsuarioID && p.CursoID == updatedProgresso.CursoID {
-			progresso[i] = updatedProgresso
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(updatedProgresso)
-			return
-		}
+	var progresso models.Progresso
+	if err := database.DB.First(&progresso, updatedProgresso.UsuarioID, updatedProgresso.CursoID).Error; err != nil {
+		http.Error(w, "Progresso não encontrado", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Progresso não encontrado", http.StatusNotFound)
+
+	if err := database.DB.Save(&updatedProgresso).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedProgresso)
 }
 
 func DeleteProgresso(w http.ResponseWriter, r *http.Request) {
@@ -70,15 +72,16 @@ func DeleteProgresso(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	progressoMu.Lock()
-	defer progressoMu.Unlock()
-
-	for i, p := range progresso {
-		if p.UsuarioID == usuarioID && p.CursoID == cursoID {
-			progresso = append(progresso[:i], progresso[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	var progresso models.Progresso
+	if err := database.DB.First(&progresso, usuarioID, cursoID).Error; err != nil {
+		http.Error(w, "Progresso não encontrado", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Progresso não encontrado", http.StatusNotFound)
+
+	if err := database.DB.Delete(&progresso).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

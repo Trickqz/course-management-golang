@@ -7,7 +7,7 @@ type Curso struct {
 }
 
 type Usuario struct {
-    ID    int    `json:"id"`
+    ID    int    `json:"id" gorm:"primaryKey;autoIncrement"`
     Nome  string `json:"nome"`
     Email string `json:"email"`
 }
