@@ -15,5 +15,9 @@ func SetupRouter() *mux.Router {
     r.HandleFunc("/usuarios", controllers.CreateUsuario).Methods("POST")
     r.HandleFunc("/usuarios/{id}", controllers.UpdateUsuario).Methods("PUT")
     r.HandleFunc("/usuarios", controllers.DeleteUsuario).Methods("DELETE")
+    r.HandleFunc("/progresso", controllers.GetProgresso).Methods("GET")
+    r.HandleFunc("/progresso", controllers.CreateProgresso).Methods("POST")
+    r.HandleFunc("/progresso", controllers.UpdateProgresso).Methods("PUT")
+    r.HandleFunc("/progresso", controllers.DeleteProgresso).Methods("DELETE")
     return r
 }
