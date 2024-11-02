@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "net/http"
     "sync"
+    "strconv"
     "course-management-api/models"
 )
 
@@ -55,16 +56,22 @@ func UpdateCurso(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteCurso(w http.ResponseWriter, r *http.Request) {
-    id := r.URL.Query().Get("id")
+    idStr := r.URL.Query().Get("id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
     cursosMu.Lock()
+    defer cursosMu.Unlock()
+
     for i, curso := range cursos {
         if curso.ID == id {
             cursos = append(cursos[:i], cursos[i+1:]...)
-            cursosMu.Unlock()
             w.WriteHeader(http.StatusNoContent)
             return
         }
     }
-    cursosMu.Unlock()
     http.Error(w, "Curso não encontrado", http.StatusNotFound)
 }
