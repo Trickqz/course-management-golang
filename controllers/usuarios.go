@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"course-management-api/models"
 	"course-management-api/database"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -14,12 +15,19 @@ var (
 	usuariosMu sync.Mutex
 )
 
-func CreateUsuario(w http.ResponseWriter, r *http.Request) {
+func Registrar(w http.ResponseWriter, r *http.Request) {
 	var novoUsuario models.Usuario
 	if err := json.NewDecoder(r.Body).Decode(&novoUsuario); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(novoUsuario.Senha), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Erro ao criar senha", http.StatusInternalServerError)
+		return
+	}
+	novoUsuario.Senha = string(hashedPassword)
 
 	if err := database.DB.Create(&novoUsuario).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
