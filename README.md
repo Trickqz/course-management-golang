@@ -32,19 +32,6 @@ Esta é uma API RESTful para gerenciar usuários, cursos e progresso em um siste
 - Gorilla Mux para roteamento
 - Bcrypt para hashing de senhas
 
-## Estrutura do Projeto
-
-server/
-│
-├── controllers/ # Controladores para gerenciar a lógica da aplicação
-├── database/ # Configuração e conexão com o banco de dados
-├── models/ # Definições dos modelos de dados
-├── routes/ # Configuração das rotas da API
-├── middleware/ # Middleware para autenticação
-├── auth/ # Lógica de autenticação
-├── .env # Variáveis de ambiente
-└── main.go # Ponto de entrada da aplicação
-
 ## Como Configurar
 
 ### Pré-requisitos
@@ -80,4 +67,4 @@ Esse README fornece uma visão geral clara do seu projeto, como configurá-lo e 
 
 ### Rotas
 
-todas as rotas estão no arquivo routes.go ou caso queira testar as rotas no postman, segue o link do postman: [Postman Collection](https://workhub-0304.postman.co/workspace/f425429d-ec68-4fcc-a249-bcd28f0ef221)
+todas as rotas estão no arquivo routes.go ou caso queira testar as rotas no postman, segue o link do postman: [Link do Postman](https://workhub-0304.postman.co/workspace/f425429d-ec68-4fcc-a249-bcd28f0ef221)
